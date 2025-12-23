@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -7,19 +7,20 @@ const app = express();
 app.use(express.json());
 
 // CORS middleware
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version");
   res.header("Access-Control-Expose-Headers", "Mcp-Session-Id");
   if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
+    res.sendStatus(204);
+    return;
   }
   next();
 });
 
 // Create and configure MCP server
-function createMcpServer() {
+function createMcpServer(): McpServer {
   const server = new McpServer({
     name: "hosted-postgres-mcp",
     version: "1.0.0",
@@ -40,7 +41,7 @@ function createMcpServer() {
       return {
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: `Random number: ${randomNumber}`,
           },
         ],
@@ -52,7 +53,7 @@ function createMcpServer() {
 }
 
 // MCP POST endpoint - stateless mode
-app.post("/mcp", async (req, res) => {
+app.post("/mcp", async (req: Request, res: Response) => {
   const server = createMcpServer();
   try {
     const transport = new StreamableHTTPServerTransport({
@@ -79,7 +80,7 @@ app.post("/mcp", async (req, res) => {
 });
 
 // Handle unsupported methods
-app.get("/mcp", (req, res) => {
+app.get("/mcp", (req: Request, res: Response) => {
   res.status(405).json({
     jsonrpc: "2.0",
     error: { code: -32000, message: "Method not allowed." },
@@ -88,7 +89,7 @@ app.get("/mcp", (req, res) => {
 });
 
 // Health check
-app.get("/health", (req, res) => {
+app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
@@ -96,3 +97,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`MCP server running on port ${PORT}`);
 });
+
