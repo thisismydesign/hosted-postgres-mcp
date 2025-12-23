@@ -26,12 +26,14 @@ function createMcpServer() {
   });
 
   // Register a simple tool that returns a random number
-  server.tool(
+  server.registerTool(
     "random_number",
-    "Returns a random number between min and max",
     {
-      min: z.number().default(0).describe("Minimum value (default 0)"),
-      max: z.number().default(100).describe("Maximum value (default 100)"),
+      description: "Returns a random number between min and max",
+      inputSchema: {
+        min: z.number().default(0).describe("Minimum value (default 0)"),
+        max: z.number().default(100).describe("Maximum value (default 100)"),
+      },
     },
     async ({ min, max }) => {
       const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
