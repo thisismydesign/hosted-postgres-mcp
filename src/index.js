@@ -6,6 +6,18 @@ import { z } from "zod";
 const app = express();
 app.use(express.json());
 
+// CORS middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version");
+  res.header("Access-Control-Expose-Headers", "Mcp-Session-Id");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Create and configure MCP server
 function createMcpServer() {
   const server = new McpServer({
