@@ -7,6 +7,8 @@ import pg from "pg";
 const app = express();
 app.use(express.json());
 
+const DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || "public";
+
 // CORS middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -70,7 +72,7 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
   server.registerTool(
     "list_tables",
     {
-      description: "List all tables in the public schema",
+      description: `List all tables in the ${DATABASE_SCHEMA} schema`,
       inputSchema: {},
     },
     async () => {
@@ -78,7 +80,8 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
       try {
         await client.connect();
         const result = await client.query(
-          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 ORDER BY table_name",
+          [DATABASE_SCHEMA]
         );
         return {
           content: [
@@ -108,8 +111,8 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
       try {
         await client.connect();
         const result = await client.query(
-          "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = $1 ORDER BY ordinal_position",
-          [table_name]
+          "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = $1 AND table_schema = $2 ORDER BY ordinal_position",
+          [table_name, DATABASE_SCHEMA]
         );
         return {
           content: [
