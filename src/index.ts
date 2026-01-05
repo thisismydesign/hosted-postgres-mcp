@@ -13,7 +13,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
-    "Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version, X-Database-Url, X-Custom-Auth-Headers"
+    "Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version, X-Database-Url, X-Database-User, X-Database-Password, X-Database-Host, X-Database-Port, X-Database-Name, X-Custom-Auth-Headers"
   );
   res.header("Access-Control-Expose-Headers", "Mcp-Session-Id");
   if (req.method === "OPTIONS") {
@@ -22,6 +22,32 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
   next();
 });
+
+function getDatabaseUrl(req: Request): string {
+  const fullUrl = (req.headers["x-database-url"] as string) || process.env.DATABASE_URL;
+  if (fullUrl) {
+    return fullUrl;
+  }
+
+  const user = (req.headers["x-database-user"] as string) || process.env.DATABASE_USER;
+  const password = (req.headers["x-database-password"] as string) || process.env.DATABASE_PASSWORD;
+  const host = (req.headers["x-database-host"] as string) || process.env.DATABASE_HOST;
+  const port = (req.headers["x-database-port"] as string) || process.env.DATABASE_PORT;
+  const dbName = (req.headers["x-database-name"] as string) || process.env.DATABASE_NAME;
+
+  const missing: string[] = [];
+  if (!user) missing.push("user");
+  if (!password) missing.push("password");
+  if (!host) missing.push("host");
+  if (!port) missing.push("port");
+  if (!dbName) missing.push("database name");
+
+  if (missing.length > 0) {
+    throw new Error(`Missing database configuration: ${missing.join(", ")}`);
+  }
+
+  return `postgresql://${user}:${password}@${host}:${port}/${dbName}`;
+}
 
 // Create and configure MCP server with database URL
 async function createMcpServer(databaseUrl: string): Promise<McpServer> {
@@ -144,12 +170,14 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
 
 // MCP POST endpoint - stateless mode
 app.post("/mcp", async (req: Request, res: Response) => {
-  const databaseUrl = req.headers["x-database-url"] as string | undefined;
-
-  if (!databaseUrl) {
+  let databaseUrl: string;
+  try {
+    databaseUrl = getDatabaseUrl(req);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     res.status(400).json({
       jsonrpc: "2.0",
-      error: { code: -32600, message: "Missing X-Database-Url header" },
+      error: { code: -32600, message },
       id: null,
     });
     return;
