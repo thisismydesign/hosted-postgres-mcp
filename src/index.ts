@@ -103,6 +103,35 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     }
   );
 
+  // Tool: Get schema for all tables
+  server.registerTool(
+    "describe_tables",
+    {
+      description: `Get column names and types for all tables in the ${DATABASE_SCHEMA} schema`,
+      inputSchema: {},
+    },
+    async () => {
+      const client = new pg.Client({ connectionString: databaseUrl });
+      try {
+        await client.connect();
+        const result = await client.query(
+          "SELECT table_name, column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = $1 ORDER BY table_name, ordinal_position",
+          [DATABASE_SCHEMA]
+        );
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result.rows, null, 2),
+            },
+          ],
+        };
+      } finally {
+        await client.end();
+      }
+    }
+  );
+
   // Tool: Run a read-only SQL query
   server.registerTool(
     "query",
