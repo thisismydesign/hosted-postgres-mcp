@@ -17,7 +17,7 @@ export type ToolDefinition = {
 
 export const listTables: ToolDefinition = {
   name: "list_tables",
-  description: `List all tables in the ${DATABASE_SCHEMA} schema`,
+  description: "List all tables",
   inputSchema: {},
   handler: async ({ databaseUrl }) => {
     const client = new pg.Client({ connectionString: databaseUrl as string });
@@ -71,7 +71,7 @@ export const describeTable: ToolDefinition = {
 
 export const describeTables: ToolDefinition = {
   name: "describe_tables",
-  description: `Get column names and types for all tables in the ${DATABASE_SCHEMA} schema`,
+  description: "Get column names and types for all tables",
   inputSchema: {},
   handler: async ({ databaseUrl }) => {
     const client = new pg.Client({ connectionString: databaseUrl as string });

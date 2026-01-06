@@ -17,9 +17,10 @@ Remote MCP server for querying PostgreSQL databases via Streamable HTTP transpor
 
 ### Tools
 
-- `list_tables` - List all tables in public schema
-- `describe_table` - Get columns and types for a table
-- `query` - Run read-only SQL queries
+- `list_tables` - List all tables
+- `describe_table` - Get column names and types for a table
+- `describe_tables` - Get column names and types for all tables
+- `query` - Run a read-only SQL query
 
 ## Development
 
