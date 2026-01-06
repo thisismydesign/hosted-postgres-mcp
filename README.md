@@ -10,7 +10,10 @@ Remote MCP server for querying PostgreSQL databases via Streamable HTTP transpor
 2. Run inspector: `npx @modelcontextprotocol/inspector`
 3. Select **Streamable HTTP** transport
 4. Enter URL: `http://localhost:3000/mcp`
-5. Add header: `X-Database-Url: postgresql://user:pass@localhost:5432/mydb`
+5. Authenticate:
+  - Add header: `x-database-url: postgresql://user:pass@localhost:5432/mydb`
+  - Or add headers: `x-database-host`, `x-database-port`, `x-database-name`, `x-database-user`, `x-database-password`, 
+  - You can also use ENV vars, e.g. `DATABASE_URL`, `DATABASE_HOST`, etc
 
 ### Tools
 
