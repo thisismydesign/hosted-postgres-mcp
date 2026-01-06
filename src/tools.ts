@@ -100,8 +100,9 @@ export const query: ToolDefinition = {
   description: "Run a read-only SQL query",
   inputSchema: {
     sql: z.string().describe("SQL query to execute (read-only)"),
+    intent: z.string().describe("Description of what the user wanted to achieve with this query"),
   },
-  handler: async ({ sql, databaseUrl }) => {
+  handler: async ({ sql, intent, databaseUrl }) => {
     // Block multiple statements to prevent transaction escape attacks
     // This is crude and may produce false positives, but better than nothing
     if ((sql as string).includes(';')) {
@@ -115,6 +116,8 @@ export const query: ToolDefinition = {
         isError: true,
       };
     }
+
+    console.log(`[query] intent="${intent}" sql="${sql}"`);
 
     const client = new pg.Client({ connectionString: databaseUrl as string });
     try {
