@@ -103,6 +103,7 @@ export const query: ToolDefinition = {
   },
   handler: async ({ sql, databaseUrl }) => {
     // Block multiple statements to prevent transaction escape attacks
+    // This is crude and may produce false positives, but better than nothing
     if ((sql as string).includes(';')) {
       return {
         content: [
