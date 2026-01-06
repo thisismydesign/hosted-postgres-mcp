@@ -102,6 +102,19 @@ export const query: ToolDefinition = {
     sql: z.string().describe("SQL query to execute (read-only)"),
   },
   handler: async ({ sql, databaseUrl }) => {
+    // Block multiple statements to prevent transaction escape attacks
+    if ((sql as string).includes(';')) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: "Error: Multiple statements not allowed",
+          },
+        ],
+        isError: true,
+      };
+    }
+
     const client = new pg.Client({ connectionString: databaseUrl as string });
     try {
       await client.connect();
