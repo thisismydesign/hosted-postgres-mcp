@@ -3,29 +3,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import pg from "pg";
+import { getDatabaseUrl } from "./auth.js";
 
 const app = express();
 app.use(express.json());
 
 const DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || "public";
-
-type TokenMap = Record<string, string>;
-let tokenMap: TokenMap = {};
-
-function loadTokenMap(): void {
-  const tokensJson = process.env.AUTH_TOKENS;
-  if (tokensJson) {
-    try {
-      tokenMap = JSON.parse(tokensJson);
-      console.log(`Loaded ${Object.keys(tokenMap).length} auth token(s)`);
-    } catch (error) {
-      console.error("Failed to parse AUTH_TOKENS env var:", error);
-      process.exit(1);
-    }
-  }
-}
-
-loadTokenMap();
 
 // CORS middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -42,52 +25,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
   next();
 });
-
-function extractBearerToken(req: Request): string | null {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) {
-    return null;
-  }
-  return authHeader.slice(7);
-}
-
-function getDatabaseUrl(req: Request): string {
-  // 1. Bearer token authentication (secure, obfuscated)
-  const token = extractBearerToken(req);
-  if (token) {
-    const databaseUrl = tokenMap[token];
-    if (databaseUrl) {
-      return databaseUrl;
-    }
-    throw new Error("Invalid or unknown bearer token");
-  }
-
-  // 2. Direct database URL via header or env
-  const fullUrl = (req.headers["x-database-url"] as string) || process.env.DATABASE_URL;
-  if (fullUrl) {
-    return fullUrl;
-  }
-
-  // 3. Individual credential headers or env vars
-  const user = (req.headers["x-database-user"] as string) || process.env.DATABASE_USER;
-  const password = (req.headers["x-database-password"] as string) || process.env.DATABASE_PASSWORD;
-  const host = (req.headers["x-database-host"] as string) || process.env.DATABASE_HOST;
-  const port = (req.headers["x-database-port"] as string) || process.env.DATABASE_PORT;
-  const dbName = (req.headers["x-database-name"] as string) || process.env.DATABASE_NAME;
-
-  const missing: string[] = [];
-  if (!user) missing.push("user");
-  if (!password) missing.push("password");
-  if (!host) missing.push("host");
-  if (!port) missing.push("port");
-  if (!dbName) missing.push("database name");
-
-  if (missing.length > 0) {
-    throw new Error(`Missing database configuration: ${missing.join(", ")}`);
-  }
-
-  return `postgresql://${user}:${password}@${host}:${port}/${dbName}`;
-}
 
 // Create and configure MCP server with database URL
 async function createMcpServer(databaseUrl: string): Promise<McpServer> {
