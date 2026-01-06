@@ -1,6 +1,21 @@
 import { Request } from "express";
+import { AsyncLocalStorage } from "async_hooks";
 
 type TokenMap = Record<string, string>;
+
+export type RequestContext = {
+  user: string;
+};
+
+export const requestContext = new AsyncLocalStorage<RequestContext>();
+
+export function getCurrentUser(): string {
+  const user = requestContext.getStore()?.user;
+  if (!user) {
+    throw new Error("No user in request context");
+  }
+  return user;
+}
 
 function getTokenMap(): TokenMap {
   const tokensJson = process.env.AUTH_TOKENS;
@@ -44,29 +59,25 @@ function getDatabaseUrlFromCredentials(req: Request): string | null {
     return null;
   }
 
-  const missing: string[] = [];
-  if (!user) missing.push("user");
-  if (!password) missing.push("password");
-  if (!host) missing.push("host");
-  if (!port) missing.push("port");
-  if (!dbName) missing.push("database name");
-
-  if (missing.length > 0) {
-    throw new Error(`Missing database configuration: ${missing.join(", ")}`);
-  }
-
   return `postgresql://${user}:${password}@${host}:${port}/${dbName}`;
 }
 
-export function getDatabaseUrl(req: Request): string {
-  const tokenUrl = getDatabaseUrlFromToken(req);
-  if (tokenUrl) return tokenUrl;
+function extractUserFromUrl(databaseUrl: string): string {
+  const match = databaseUrl.match(/postgresql:\/\/([^:]+):/);
+  if (!match?.[1]) {
+    throw new Error("Invalid database URL: could not extract user");
+  }
+  return match[1];
+}
 
-  const fullUrl = getDatabaseUrlFromFullUrl(req);
-  if (fullUrl) return fullUrl;
+export function getDatabaseUrl(req: Request): { databaseUrl: string; user: string } {
+  const databaseUrl = getDatabaseUrlFromToken(req)
+    ?? getDatabaseUrlFromFullUrl(req)
+    ?? getDatabaseUrlFromCredentials(req);
 
-  const credentialsUrl = getDatabaseUrlFromCredentials(req);
-  if (credentialsUrl) return credentialsUrl;
+  if (!databaseUrl) {
+    throw new Error("Missing authentication: provide Bearer token, DB URL, or DB credentials");
+  }
 
-  throw new Error("Missing authentication: provide Bearer token, X-Database-Url, or credential headers/env vars");
+  return { databaseUrl, user: extractUserFromUrl(databaseUrl) };
 }

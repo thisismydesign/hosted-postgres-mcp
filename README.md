@@ -12,7 +12,7 @@ Remote MCP server for querying PostgreSQL databases via Streamable HTTP transpor
 4. Enter URL: `http://localhost:3000/mcp`
 5. Authenticate:
    - Via DB URL. Header: `x-database-url: postgresql://user:pass@localhost:5432/mydb` or `DATABASE_URL` env var.
-   - Via DB details. Headers: `x-database-host`, `x-database-port`, `x-database-name`, `x-database-user`, `x-database-password` or `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD` env vars.
+   - Via DB credentials. Headers: `x-database-host`, `x-database-port`, `x-database-name`, `x-database-user`, `x-database-password` or `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD` env vars.
    - Via Bearer token: `Authorization: Bearer <token>`. Set `AUTH_TOKENS` env var to contain a JSON of tokens and urls: `AUTH_TOKENS={"token1":"postgres://...","token2":"postgres://..."}`.
 
 ### Tools

@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import pg from "pg";
-import { getDatabaseUrl } from "./auth.js";
+import { getDatabaseUrl, requestContext } from "./auth.js";
 import { listTables, describeTable, describeTables, query, ToolDefinition } from "./tools.js";
 
 const app = express();
@@ -53,8 +53,11 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
 
 app.post("/mcp", async (req: Request, res: Response) => {
   let databaseUrl: string;
+  let user: string;
   try {
-    databaseUrl = getDatabaseUrl(req);
+    const result = getDatabaseUrl(req);
+    databaseUrl = result.databaseUrl;
+    user = result.user;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     res.status(400).json({
@@ -65,30 +68,32 @@ app.post("/mcp", async (req: Request, res: Response) => {
     return;
   }
 
-  try {
-    const server = await createMcpServer(databaseUrl);
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined, // Stateless mode
-    });
-
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
-
-    res.on("close", () => {
-      transport.close();
-      server.close();
-    });
-  } catch (error) {
-    console.error("MCP error:", error);
-    if (!res.headersSent) {
-      const message = error instanceof Error ? error.message : "Internal server error";
-      res.status(500).json({
-        jsonrpc: "2.0",
-        error: { code: -32603, message },
-        id: null,
+  await requestContext.run({ user }, async () => {
+    try {
+      const server = await createMcpServer(databaseUrl);
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined, // Stateless mode
       });
+
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+
+      res.on("close", () => {
+        transport.close();
+        server.close();
+      });
+    } catch (error) {
+      console.error("MCP error:", error);
+      if (!res.headersSent) {
+        const message = error instanceof Error ? error.message : "Internal server error";
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: { code: -32603, message },
+          id: null,
+        });
+      }
     }
-  }
+  });
 });
 
 app.get("/mcp", (req: Request, res: Response) => {

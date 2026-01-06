@@ -1,5 +1,6 @@
 import { z } from "zod";
 import pg from "pg";
+import { getCurrentUser } from "./auth.js";
 
 const DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || "public";
 
@@ -117,7 +118,8 @@ export const query: ToolDefinition = {
       };
     }
 
-    console.log(`[query] intent="${intent}" sql="${sql}"`);
+    const user = getCurrentUser();
+    console.log(`[query] user="${user}" intent="${intent}" sql="${sql}"`);
 
     const client = new pg.Client({ connectionString: databaseUrl as string });
     try {
