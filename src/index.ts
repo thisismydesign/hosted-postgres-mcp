@@ -43,7 +43,6 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     version: "1.0.0",
   });
 
-  // Tool: List all tables in the database
   server.registerTool(
     "list_tables",
     {
@@ -72,7 +71,6 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     }
   );
 
-  // Tool: Get schema for a specific table
   server.registerTool(
     "describe_table",
     {
@@ -103,7 +101,6 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     }
   );
 
-  // Tool: Get schema for all tables
   server.registerTool(
     "describe_tables",
     {
@@ -132,7 +129,6 @@ async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     }
   );
 
-  // Tool: Run a read-only SQL query
   server.registerTool(
     "query",
     {
