@@ -118,6 +118,7 @@ export const query: ToolDefinition = {
     const client = new pg.Client({ connectionString: databaseUrl as string });
     try {
       await client.connect();
+      await client.query("SET statement_timeout = '5s'");
       await client.query("BEGIN TRANSACTION READ ONLY");
       const result = await client.query(sql as string);
       return {
