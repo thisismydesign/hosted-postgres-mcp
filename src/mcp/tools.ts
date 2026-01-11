@@ -3,6 +3,7 @@ import pg from "pg";
 import { getCurrentUser } from "../auth.js";
 
 const DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || "public";
+const STATEMENT_TIMEOUT_SECONDS = process.env.STATEMENT_TIMEOUT_SECONDS || "5";
 
 type ToolResult = {
   content: { type: "text"; text: string }[];
@@ -124,7 +125,7 @@ export const query: ToolDefinition = {
     const client = new pg.Client({ connectionString: databaseUrl as string });
     try {
       await client.connect();
-      await client.query("SET statement_timeout = '5s'");
+      await client.query(`SET statement_timeout = '${STATEMENT_TIMEOUT_SECONDS}s'`);
       await client.query("BEGIN TRANSACTION READ ONLY");
       const result = await client.query(sql as string);
       return {

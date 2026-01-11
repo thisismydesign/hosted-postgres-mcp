@@ -15,6 +15,13 @@ Remote MCP server for querying PostgreSQL databases via Streamable HTTP transpor
    - Via DB credentials. Headers: `x-database-host`, `x-database-port`, `x-database-name`, `x-database-user`, `x-database-password` or `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD` env vars.
    - Via Bearer token: `Authorization: Bearer <token>`. Set `AUTH_TOKENS` env var to contain a JSON of tokens and urls: `AUTH_TOKENS={"token1":"postgres://...","token2":"postgres://..."}`.
 
+### Configuration
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `DATABASE_SCHEMA` | PostgreSQL schema to use | `public` |
+| `STATEMENT_TIMEOUT_SECONDS` | Query timeout in seconds | `5` |
+
 ### Tools
 
 - `list_tables` - List all tables
