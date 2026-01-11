@@ -1,6 +1,6 @@
 import { z } from "zod";
 import pg from "pg";
-import { getCurrentUser } from "./auth.js";
+import { getCurrentUser } from "../auth.js";
 
 const DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || "public";
 

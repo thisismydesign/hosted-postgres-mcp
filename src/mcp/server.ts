@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import pg from "pg";
-import { listTables, describeTable, describeTables, query, ToolDefinition } from "../tools.js";
+import { listTables, describeTable, describeTables, query, ToolDefinition } from "./tools.js";
 
 export async function createMcpServer(databaseUrl: string): Promise<McpServer> {
   const testClient = new pg.Client({ connectionString: databaseUrl });
