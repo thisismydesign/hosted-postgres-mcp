@@ -27,6 +27,7 @@ Remote MCP server for querying PostgreSQL databases via Streamable HTTP transpor
 - `list_tables` - List all tables
 - `describe_table` - Get column names and types for a table
 - `describe_tables` - Get column names and types for all tables
+- `describe_indexes` - Get indexes for a table
 - `query` - Run a read-only SQL query
 
 ## Development

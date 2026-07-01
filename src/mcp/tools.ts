@@ -97,6 +97,45 @@ export const describeTables: ToolDefinition = {
   },
 };
 
+export const describeIndexes: ToolDefinition = {
+  name: "describe_indexes",
+  description: "Get indexes for a table",
+  inputSchema: {
+    table_name: z.string().describe("Name of the table to get indexes for"),
+  },
+  handler: async ({ table_name, databaseUrl }) => {
+    const client = new pg.Client({ connectionString: databaseUrl as string });
+    try {
+      await client.connect();
+      const result = await client.query(
+        `SELECT
+          i.relname AS index_name,
+          a.attname AS column_name,
+          ix.indisunique AS is_unique,
+          ix.indisprimary AS is_primary
+        FROM pg_class t
+        JOIN pg_index ix ON t.oid = ix.indrelid
+        JOIN pg_class i ON i.oid = ix.indexrelid
+        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
+        JOIN pg_namespace n ON n.oid = t.relnamespace
+        WHERE t.relname = $1 AND n.nspname = $2
+        ORDER BY i.relname, a.attnum`,
+        [table_name, DATABASE_SCHEMA]
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result.rows, null, 2),
+          },
+        ],
+      };
+    } finally {
+      await client.end();
+    }
+  },
+};
+
 export const query: ToolDefinition = {
   name: "query",
   description: "Run a read-only SQL query",

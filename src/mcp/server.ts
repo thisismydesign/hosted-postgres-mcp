@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import pg from "pg";
-import { listTables, describeTable, describeTables, query, ToolDefinition } from "./tools.js";
+import { listTables, describeTable, describeTables, describeIndexes, query, ToolDefinition } from "./tools.js";
 
 export async function createMcpServer(databaseUrl: string): Promise<McpServer> {
   const testClient = new pg.Client({ connectionString: databaseUrl });
@@ -17,7 +17,7 @@ export async function createMcpServer(databaseUrl: string): Promise<McpServer> {
     version: "1.0.0",
   });
 
-  const tools: ToolDefinition[] = [listTables, describeTable, describeTables, query];
+  const tools: ToolDefinition[] = [listTables, describeTable, describeTables, describeIndexes, query];
   for (const tool of tools) {
     server.registerTool(
       tool.name,
